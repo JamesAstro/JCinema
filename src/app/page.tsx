@@ -24,6 +24,7 @@ import CustomRow from "./components/CustomRow";
 import InputSelect from "./components/InputSelect";
 import { useRouter } from "next/navigation";
 import LoadingLight from "./components/Loading/LoadingLight";
+import MovieListSkeleton from "./components/Loader/MovieListSkeleton";
 
 export default function Home() {
   const [currentItem, setCurrentItem] = useState<Movie | null>(null);
@@ -38,18 +39,53 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  const [isPopularLoading, setIsPopularLoading] = useState(true);
+  const [isTopRateLoading, setIsTopRateLoading] = useState(true);
+  const [isUpcomingLoading, setIsUpcomingLoading] = useState(true);
+  const [isMovieDetailLoading, setIsMovieDetailLoading] = useState(true);
 
   // Fetch movies on mount
   useEffect(() => {
-    fetchPopular().then((res) => {
-      setPopularMovies(res?.results);
-    });
-    fetchTopRated().then((res) => {
-      setTopRatedMovies(res?.results);
-    });
-    fetchUpcoming().then((res) => {
-      setUpcomingMovies(res?.results);
-    });
+    fetchPopular()
+      .then((res) => {
+        setPopularMovies(res?.results);
+        setIsPopularLoading(false);
+      })
+      .catch((err) => {
+        console.error("Failed to fetch popular movies:", err);
+        setIsPopularLoading(false);
+      });
+    // const loadPopularMovies = async () => {
+    //   try {
+    //     const res = await fetchPopular();
+    //     setPopularMovies(res?.results);
+    //   } catch (err) {
+    //     console.error("Failed to fetch popular movies:", err);
+    //   } finally {
+    //     setIsPopularLoading(false);
+    //   }
+    // };
+
+    // loadPopularMovies();
+    fetchTopRated()
+      .then((res) => {
+        setTopRatedMovies(res?.results);
+        setIsTopRateLoading(false);
+      })
+      .catch((err) => {
+        console.error("Failed to fetch top rated movies:", err);
+        setIsTopRateLoading(false);
+      });
+
+    fetchUpcoming()
+      .then((res) => {
+        setUpcomingMovies(res?.results);
+        setIsUpcomingLoading(false);
+      })
+      .catch((err) => {
+        console.error("Failed to fetch upcoming movies:", err);
+        setIsUpcomingLoading(false);
+      });
   }, []);
 
   useEffect(() => {
@@ -126,6 +162,8 @@ export default function Home() {
     setIsSearchOpen(false);
   };
 
+  console.log("isMovieDetailLoading", isMovieDetailLoading);
+
   return (
     <LayoutContainer>
       <div className="w-full flex gap-x-5 justify-between">
@@ -164,7 +202,7 @@ export default function Home() {
                 </div>
               </form>
               {isSearchOpen && searchResults.length > 0 && (
-                <div className="absolute top-[40px] w-full bg-[#1e2129] rounded-[8px] shadow-lg z-10 max-h-[300px] overflow-y-auto">
+                <div className="absolute top-[40px] w-full bg-[#1e2129] rounded-[8px] shadow-lg z-10 cScrollBar max-h-[300px] overflow-y-auto">
                   {searchResults.map((movie) => (
                     <div
                       key={movie.id}
@@ -200,7 +238,10 @@ export default function Home() {
             </div>
           </div>
 
-          <BannerCarousel setCurrentItem={setCurrentItem} />
+          <BannerCarousel
+            setCurrentItem={setCurrentItem}
+            setIsMovieDetailLoading={setIsMovieDetailLoading}
+          />
 
           <div className="mt-8 flex justify-end">
             <div className="flex items-center gap-x-1 text-[13px] ">
@@ -244,47 +285,77 @@ export default function Home() {
           </div>
           <div className="mt-3  flex flex-col gap-y-20  w-full">
             {aciveTab === 0 && (
-              <CustomRow
-                title="Popular Now"
-                data={popularMovies}
-                listClassName="overflow-y-auto max-h-[480px]"
-              />
+              <>
+                {isPopularLoading ? (
+                  <MovieListSkeleton listClassName="overflow-y-auto max-h-[480px]" />
+                ) : (
+                  <CustomRow
+                    title="Popular Now"
+                    data={popularMovies}
+                    listClassName="overflow-y-auto max-h-[480px]"
+                  />
+                )}
+              </>
             )}
             {aciveTab === 1 && (
-              <CustomRow
-                title="Top Rated"
-                data={topRatedMovies}
-                listClassName="overflow-y-auto max-h-[480px]"
-              />
+              <>
+                {isTopRateLoading ? (
+                  <MovieListSkeleton listClassName="overflow-y-auto max-h-[480px]" />
+                ) : (
+                  <CustomRow
+                    title="Top Rated"
+                    data={topRatedMovies}
+                    listClassName="overflow-y-auto max-h-[480px]"
+                  />
+                )}
+              </>
             )}
             {aciveTab === 2 && (
-              <CustomRow
-                title="Coming Soon"
-                data={upcomingMovies}
-                listClassName="overflow-y-auto max-h-[480px]"
-              />
+              <>
+                {isUpcomingLoading ? (
+                  <MovieListSkeleton listClassName="overflow-y-auto max-h-[480px]" />
+                ) : (
+                  <CustomRow
+                    title="Coming Soon"
+                    data={upcomingMovies}
+                    listClassName="overflow-y-auto max-h-[480px]"
+                  />
+                )}
+              </>
             )}
           </div>
         </div>
         <div className="w-[24%] pl-3 text-[14px] ">
           <div className="fixed top-0  w-[280px] py-8 h-full   space-y-5">
             <div className="w-full relative h-[280px] rounded-[25px] overflow-hidden">
-              <Image
-                src={`https://image.tmdb.org/t/p/original${currentItem?.poster_path!}`}
-                alt={`${currentItem?.title!} Banner`}
-                width={1000}
-                height={1000}
-                className="w-full h-full object-cover object-top"
-              />
+              {isMovieDetailLoading ? (
+                <div className="animate-pulse w-full h-full bg-gray-300">
+                  &nbsp;
+                </div>
+              ) : (
+                <Image
+                  src={`https://image.tmdb.org/t/p/original${currentItem?.poster_path!}`}
+                  alt={`${currentItem?.title!} Banner`}
+                  width={1000}
+                  height={1000}
+                  className="w-full h-full object-cover object-top"
+                />
+              )}
             </div>
             <div>
               <h2 className="text-[#b8b8b8] flex items-center gap-x-1">
                 <GoCalendar />
                 Released Year
               </h2>
-              <p className="text-[#ebebeb] ">
-                {currentItem?.release_date.split("-")[0]}
-              </p>
+              {isMovieDetailLoading ? (
+                <p className="animate-pulse rounded w-1/4 bg-gray-500">
+                  &nbsp;
+                </p>
+              ) : (
+                <p className="text-[#ebebeb] ">
+                  {currentItem?.release_date.split("-")[0]}
+                </p>
+              )}
             </div>
             <div>
               <h2 className="text-[#b8b8b8] flex items-center gap-x-1">
@@ -292,9 +363,15 @@ export default function Home() {
                 <HiLanguage />
                 Available Languages
               </h2>
-              <p className=" px-4 mt-[2px] py-[2px] text-[#fff] inline-block rounded-[50px] bg-[#353942] ">
-                {currentItem?.original_language}
-              </p>
+              {isMovieDetailLoading ? (
+                <p className="animate-pulse mt-[2px] w-1/4 py-[2px] inline-block rounded-[50px] bg-gray-500 ">
+                  &nbsp;
+                </p>
+              ) : (
+                <p className=" px-4 mt-[2px] py-[2px] text-[#fff] inline-block rounded-[50px] bg-[#353942] ">
+                  {currentItem?.original_language}
+                </p>
+              )}
             </div>
             <div>
               <h2 className="text-[#b8b8b8] flex items-center gap-x-1">
@@ -304,19 +381,31 @@ export default function Home() {
               <div className="flex w-full mt-2 gap-x-1 justify-between items-center">
                 <div className="bg-[#171a21] w-[48%] text-[12px] px-4 py-1 rounded-[4px] text-[#dfdfdf]">
                   <h3>IMDB</h3>
-                  <p className="flex gap-x-1 items-center">
-                    <MdOutlineStarPurple500 className="text-[#e6c962] text-[15px]" />
-                    {currentItem?.vote_average.toFixed(1)}/10 (
-                    {currentItem?.vote_count})
-                  </p>
+                  {isMovieDetailLoading ? (
+                    <p className="text-[15px] animate-pulse w-2/4 rounded bg-gray-500">
+                      &nbsp;
+                    </p>
+                  ) : (
+                    <p className="flex gap-x-1 items-center">
+                      <MdOutlineStarPurple500 className="text-[#e6c962] text-[15px]" />
+                      {currentItem?.vote_average.toFixed(1)}/10 (
+                      {currentItem?.vote_count})
+                    </p>
+                  )}
                 </div>
 
                 <div className="bg-[#171a21] w-[48%] text-[12px] px-4 py-1 rounded-[4px] text-[#dfdfdf]">
                   <h3>Popularity</h3>
-                  <p className="flex gap-x-1 items-center">
-                    <FaFire className="text-[#d87c4f] text-[14px]" />
-                    {currentItem?.popularity.toFixed()}
-                  </p>
+                  {isMovieDetailLoading ? (
+                    <p className="text-[15px] animate-pulse w-2/4 rounded bg-gray-500">
+                      &nbsp;
+                    </p>
+                  ) : (
+                    <p className="flex gap-x-1 items-center">
+                      <FaFire className="text-[#d87c4f] text-[14px]" />
+                      {currentItem?.popularity.toFixed()}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
@@ -326,16 +415,22 @@ export default function Home() {
                 <MdOutlineMovie />
                 Genres
               </h2>
-              <div className="flex items-center mt-[3px] flex-wrap gap-1 ">
-                {currentItem?.genre_ids?.map((genreId: number) => (
-                  <div
-                    key={genreId}
-                    className="text-[#fff] text-[12px] px-2 py-[2px] inline-block rounded-[50px] bg-[#353942]"
-                  >
-                    {genres.find((genre) => genre.id === genreId)?.name}
-                  </div>
-                ))}
-              </div>
+              {isMovieDetailLoading ? (
+                <div className="mt-[3px] w-full bg-gray-400 animate-pulse py-[2px] rounded-[50px]">
+                  &nbsp;
+                </div>
+              ) : (
+                <div className="flex items-center mt-[3px] flex-wrap gap-1 ">
+                  {currentItem?.genre_ids?.map((genreId: number) => (
+                    <div
+                      key={genreId}
+                      className="text-[#fff] text-[12px] px-2 py-[2px] inline-block rounded-[50px] bg-[#353942]"
+                    >
+                      {genres.find((genre) => genre.id === genreId)?.name}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>

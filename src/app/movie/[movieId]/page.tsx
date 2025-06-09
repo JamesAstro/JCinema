@@ -6,6 +6,8 @@ import {
   fetchRecomendations,
 } from "@/app/actions/actions";
 import Row from "@/app/components/Row";
+import Wrapper from "@/app/components/Wrapper";
+import BackButton from "@/app/components/BackButton";
 
 type Props = {
   params: Promise<{
@@ -22,6 +24,9 @@ export default async function MoviePage({ params }: Props) {
 
   return (
     <main className="bg-[#111] min-h-screen">
+      <Wrapper>
+        <BackButton />
+      </Wrapper>
       <div
         className="relative h-96 w-full"
         style={{
@@ -68,7 +73,9 @@ export default async function MoviePage({ params }: Props) {
       </div>
 
       <div className="mt-40 md:mt-52">
-        <Row title="Similar Titles" data={recommendations.results} />
+        <Wrapper>
+          <Row title="Similar Titles" data={recommendations.results} />
+        </Wrapper>
       </div>
     </main>
   );
