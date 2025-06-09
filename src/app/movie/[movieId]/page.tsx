@@ -20,6 +20,20 @@ export default async function MoviePage({ params }: Props) {
   const movie: Movie = await fetchMovieById(movieId);
   const video = await fetchMovieByIdVideos(movieId);
 
+  // Find the first trailer or official video
+  // Find the first trailer, or fall back to clip or teaser
+  const trailer =
+    video.results?.find(
+      (vid: any) => vid.type === "Trailer" && vid.site === "YouTube"
+    ) ||
+    video.results?.find(
+      (vid: any) =>
+        (vid.type === "Clip" ||
+          vid.type === "Teaser" ||
+          vid.type === "Featurette" ||
+          vid.type === "Behind the Scenes") &&
+        vid.site === "YouTube"
+    );
   const recommendations = await fetchRecomendations(movieId);
 
   return (
@@ -71,8 +85,27 @@ export default async function MoviePage({ params }: Props) {
         <div className="absolute inset-0 bg-[#111] opacity-50" />
         <div className="absolute inset-0 bg-gradient-to-t from-[#111] to-transparent" />
       </div>
+      {trailer && (
+        <div className="mt-52">
+          <Wrapper>
+            <h2 className="text-2xl font-bold text-white mb-6">
+              Watch Trailer
+            </h2>
+            <div className="relative w-full " style={{ paddingBottom: "48%" }}>
+              <iframe
+                className="absolute top-0 left-0 w-full h-full"
+                src={`https://www.youtube.com/embed/${trailer.key}`}
+                title={trailer.name}
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              ></iframe>
+            </div>
+          </Wrapper>
+        </div>
+      )}
 
-      <div className="mt-40 md:mt-52">
+      <div className="mt-14 w-full">
         <Wrapper>
           <Row title="Similar Titles" data={recommendations.results} />
         </Wrapper>

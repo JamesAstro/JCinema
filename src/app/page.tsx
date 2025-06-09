@@ -162,8 +162,6 @@ export default function Home() {
     setIsSearchOpen(false);
   };
 
-  console.log("isMovieDetailLoading", isMovieDetailLoading);
-
   return (
     <LayoutContainer>
       <div className="w-full flex gap-x-5 justify-between">
